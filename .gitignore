@@ -1,0 +1,107 @@
+# ==========================================
+# 1. SECURITY: SECRETS, KEYS & CREDENTIALS
+# ==========================================
+.secrets/
+.keys/
+secrets/
+
+# Environment variables (шаблон .env.example оставляем)
+.env
+.env.*
+!.env.example
+
+# Ключи, сертификаты и JSON-аккаунты (при этом package.json / tsconfig.json не трогаем)
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*service-account*.json
+*credentials*.json
+*client_secret*.json
+*bug-tracker-*.json
+
+# Auth-состояния тестов (содержат токены/cookies реальных тестовых юзеров!)
+playwright/.auth/
+**/storageState*.json
+**/auth.json
+**/cookies.json
+
+# ==========================================
+# 2. QA REPORTS, TRACES & EVIDENCE (Могут содержать токены в логах/HAR!)
+# ==========================================
+reports/
+playwright-report/
+test-results/
+blob-report/
+playwright/.cache/
+.playwright-mcp/
+allure-results/
+allure-report/
+coverage/
+htmlcov/
+*.har
+*.trace.zip
+**/*.png
+**/*.jpg
+**/*.webm
+# Если нужны эталонные скриншоты для visual regression, раскомментируйте строку ниже:
+# !tests/**/screenshots/**
+
+# ==========================================
+# 3. CONTINUE / AI AGENT LOCAL FILES
+# ==========================================
+# Локальные секреты и кэш индексации Continue (rules/ и prompts/ оставляем в Git!)
+.continue/.env
+.continue/index/
+.continue/sessions/
+.continue/*.local.yaml
+.continue/*.local.md
+.continue/agents/
+# Раскомментируйте строку ниже, если репозиторий публичный и не хотите светить даже ID таблицы:
+# .continue/rules/03-google-sheets-contract.md
+
+# ==========================================
+# 4. NODE.JS / PLAYWRIGHT (TS/JS)
+# ==========================================
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+dist/
+build/
+*.tsbuildinfo
+
+# ==========================================
+# 5. PYTHON / PYTEST / UV
+# ==========================================
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.coverage
+.uv/
+uv.lock.local
+
+# ==========================================
+# 6. DOCKER, IDE & OS
+# ==========================================
+docker-compose.override.yml
+*.log
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# IDE (оставляем общие настройки проекта, если нужно, но скрываем личные)
+.idea/
+*.swp
+*.swo
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json

@@ -1,0 +1,70 @@
+name: QA Automation Quality Gate
+
+on:
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # Gate 1: Shift-Left Security (проверка на утечку секретов в PR)
+  security-scan:
+    name: security-scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout QA repo
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Gitleaks Secret Scanner
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Gate 2: Автотесты против целевого приложения
+  qa-tests:
+    name: qa-tests
+    runs-on: ubuntu-latest
+    needs: security-scan
+    steps:
+      - name: Checkout QA repo
+        uses: actions/checkout@v4
+        with:
+          path: slot-pet-qa
+
+      - name: Checkout Target App (SUT)
+        uses: actions/checkout@v4
+        with:
+          repository: mishun-repo/slot_pet_project
+          path: slot_pet_project
+
+      - name: Detect & Run Tests
+        run: |
+          if [ -f "slot-pet-qa/package.json" ]; then
+            echo "Detected Node.js / Playwright QA suite"
+            # Поднимаем SUT (адаптируется под docker-compose или npm внутри slot_pet_project)
+            if [ -f "slot_pet_project/docker-compose.yml" ]; then
+              docker compose -f slot_pet_project/docker-compose.yml up -d --wait
+            fi
+            cd slot-pet-qa
+            npm ci
+            npx playwright install --with-deps chromium
+            npm run lint --if-present
+            npx playwright test
+          elif [ -f "slot-pet-qa/pyproject.toml" ] || [ -f "slot-pet-qa/requirements.txt" ]; then
+            echo "Detected Python / Pytest QA suite"
+            # Место для запуска pytest после инициализации агентом
+            echo "Pytest suite ready"
+          else
+            echo "No test runner initialized yet (bootstrap phase). Gate passed."
+          fi
+
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-test-report
+          path: |
+            slot-pet-qa/playwright-report/
+            slot-pet-qa/test-results/
+          if-no-files-found: ignore
