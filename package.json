@@ -1,0 +1,23 @@
+{
+  "name": "slot-pet-qa",
+  "version": "1.0.0",
+  "description": "Enterprise QA automation for the Slot pet project (Playwright + TypeScript)",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:api": "playwright test --project=api",
+    "test:e2e": "playwright test --project=e2e-chromium",
+    "test:ui": "playwright test --ui",
+    "test:report": "playwright show-report",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.64.1",
+    "@types/node": "^26.6.6",
+    "typescript": "^7.0.2"
+  }
+}
