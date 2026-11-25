@@ -38,26 +38,49 @@ jobs:
           repository: mishun-repo/slot_pet_project
           path: slot_pet_project
 
-      - name: Detect & Run Tests
+      - name: Install & Start SUT (slot_pet_project)
+        working-directory: slot_pet_project
         run: |
-          if [ -f "slot-pet-qa/package.json" ]; then
-            echo "Detected Node.js / Playwright QA suite"
-            # Поднимаем SUT (адаптируется под docker-compose или npm внутри slot_pet_project)
-            if [ -f "slot_pet_project/docker-compose.yml" ]; then
-              docker compose -f slot_pet_project/docker-compose.yml up -d --wait
+          if [ -f "package-lock.json" ]; then npm ci; else npm install; fi
+          for dir in client frontend server backend; do
+            if [ -f "$dir/package.json" ]; then
+              (cd "$dir" && if [ -f "package-lock.json" ]; then npm ci; else npm install; fi)
             fi
-            cd slot-pet-qa
-            npm ci
-            npx playwright install --with-deps chromium
-            npm run lint --if-present
-            npx playwright test
-          elif [ -f "slot-pet-qa/pyproject.toml" ] || [ -f "slot-pet-qa/requirements.txt" ]; then
-            echo "Detected Python / Pytest QA suite"
-            # Место для запуска pytest после инициализации агентом
-            echo "Pytest suite ready"
-          else
-            echo "No test runner initialized yet (bootstrap phase). Gate passed."
-          fi
+          done
+
+          nohup npm run dev > ../sut.log 2>&1 &
+
+          echo "Waiting for SUT on http://localhost:5173..."
+          for i in $(seq 1 30); do
+            if curl -sSf http://localhost:5173 > /dev/null 2>&1; then
+              echo "SUT is up!"
+              exit 0
+            fi
+            sleep 2
+          done
+
+          echo "SUT failed to start within 60s. Logs:"
+          cat ../sut.log
+          exit 1
+
+      - name: Run QA Tests
+        working-directory: slot-pet-qa
+        run: |
+          if [ -f "package-lock.json" ]; then npm ci; else npm install; fi
+          npx playwright install --with-deps chromium
+          npm run lint --if-present
+          npx playwright test
+
+      - name: Upload Test & SUT Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qa-artifacts
+          path: |
+            slot-pet-qa/playwright-report/
+            slot-pet-qa/test-results/
+            sut.log
+          if-no-files-found: ignore
 
       - name: Upload Test Artifacts
         if: always()
